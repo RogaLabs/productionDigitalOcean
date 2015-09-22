@@ -1,0 +1,14 @@
+---
+- hosts: local
+  connection: local
+  roles:
+    - digital_ocean
+
+- hosts: production
+  remote_user: root
+  roles:
+    - base
+    - { role: ruby, tags: ruby, sudo: true }
+    - nginx
+    - unicorn
+    - postgresql

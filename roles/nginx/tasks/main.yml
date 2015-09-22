@@ -1,0 +1,42 @@
+---
+- name: Install nginx
+  apt: name=nginx force=yes
+  tags: nginx
+
+- name: Disable default nginx site
+  file: path=/etc/nginx/sites-enabled/default state=absent
+  notify: restart nginx
+  tags: nginx
+
+- name: Create the directories for site specific configurations
+  file: path={{nginx_conf_dir}}/{{ item }} state=directory owner=root group={{nginx_group}} mode=0755
+  with_items:
+    - "sites-available"
+    - "sites-enabled"
+    - "auth_basic"
+    - "conf.d"
+  tags: nginx
+
+- name: Copy nginx configuration
+  template: src={{ server_type }}.conf.j2 dest={{nginx_conf_dir}}/sites-available/{{ app_name }}.conf
+  notify: restart nginx
+  tags: nginx
+
+- name: Symlink nginx configuration
+  file: src={{nginx_conf_dir}}/sites-available/{{ app_name }}.conf dest={{nginx_conf_dir}}/sites-enabled/{{ app_name }}.conf state=link
+  notify: restart nginx
+  tags: nginx
+
+- name: Create nginx.conf
+  template: src=nginx.conf.j2 dest={{nginx_conf_dir}}/nginx.conf
+  notify: restart nginx
+  tags: nginx
+
+- name: Create certificates directory
+  file: path={{ ssl_certificate_path|dirname }} recurse=yes state=directory
+  tags: nginx
+
+- name: Create self-signed SSL cert
+  command: openssl req -new -nodes -x509 -subj "/C=US/ST=California/L=MountainView/O=IT/CN=${server_name}" -days 3650 -keyout {{ ssl_certificate_key_path }} -out {{ ssl_certificate_path }} -extensions v3_ca creates={{ ssl_certificate_path }}
+  notify: restart nginx
+  tags: nginx

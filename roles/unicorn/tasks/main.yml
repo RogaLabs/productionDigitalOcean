@@ -1,0 +1,19 @@
+---
+- name: Create the directories for unicorn specific configurations
+  file: path={{path}}/{{ item }} state=directory owner=root group={{nginx_group}} mode=0755
+  with_items:
+    - "unicorn"
+  tags: unicorn
+
+- name: Configure unicorn
+  template: src=unicorn.rb.j2 dest={{ unicorn_config_path }}
+  tags: unicorn
+
+- name: Install unicorn
+  command: /bin/bash -l -c 'gem install unicorn --no-ri --no-rdoc' chdir={{ path }}
+  tags: unicorn
+
+- name: Create upstart config
+  template: src=upstart.conf.j2 dest=/etc/init/{{ unicorn_app_name }}.conf
+  notify: restart application
+  tags: unicorn

@@ -1,0 +1,11 @@
+---
+nginx_conf_dir: /etc/nginx
+nginx_user: www-data
+nginx_group: '{{ nginx_user }}'
+nginx_workers: 2
+nginx_connections: 1024
+nginx_keepalive_requests: 60
+nginx_keepalive_timeout: 30
+
+unicorn_workers: 4
+rails_env: production
